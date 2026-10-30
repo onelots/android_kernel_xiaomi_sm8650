@@ -1758,7 +1758,7 @@ static int memlat_dev_probe(struct platform_device *pdev)
 			if (!ret)
 				continue;
 			if (ret != -EPROBE_DEFER) {
-				dev_err(dev, "ev=%lu not found on cpu%d: %d\n",
+				dev_err(dev, "ev=%u not found on cpu%d: %d\n",
 						event_id, cpu, ret);
 				if (event_id == INST_EV || event_id == CYC_EV)
 					return ret;
@@ -1912,7 +1912,7 @@ static int memlat_grp_probe(struct platform_device *pdev)
 			if (!ret)
 				continue;
 			if (ret != -EPROBE_DEFER)
-				dev_err(dev, "ev=%lu not found on cpu%d: %d\n",
+				dev_err(dev, "ev=%u not found on cpu%d: %d\n",
 						event_id, cpu, ret);
 			return ret;
 		}
