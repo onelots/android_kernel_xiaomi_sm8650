@@ -2331,6 +2331,30 @@ static void msm_pcie_access_reg(struct msm_pcie_dev_t *dev, bool wr)
 	}
 }
 
+void ispv4_force_prest(void)
+{
+	struct msm_pcie_dev_t *dev = msm_pcie_dev[1];
+
+	if (!dev)
+		return;
+
+	gpio_set_value(dev->gpio[MSM_PCIE_GPIO_PERST].num,
+			dev->gpio[MSM_PCIE_GPIO_PERST].on);
+}
+EXPORT_SYMBOL_GPL(ispv4_force_prest);
+
+void ispv4_release_prest(void)
+{
+	struct msm_pcie_dev_t *dev = msm_pcie_dev[1];
+
+	if (!dev)
+		return;
+
+	gpio_set_value(dev->gpio[MSM_PCIE_GPIO_PERST].num,
+			1 - dev->gpio[MSM_PCIE_GPIO_PERST].on);
+}
+EXPORT_SYMBOL_GPL(ispv4_release_prest);
+
 static void msm_pcie_sel_debug_testcase(struct msm_pcie_dev_t *dev,
 					u32 testcase)
 {
@@ -2645,6 +2669,31 @@ static void msm_pcie_sel_debug_testcase(struct msm_pcie_dev_t *dev,
 		break;
 	}
 }
+
+int msm_pcie_enable_rc(u32 rc_idx)
+{
+	int ret = 0;
+	struct msm_pcie_dev_t *dev;
+
+	if (rc_idx >= MAX_RC_NUM)
+		return -EINVAL;
+
+	dev = msm_pcie_dev[rc_idx];
+	if (!dev)
+		return -ENODEV;
+
+	mutex_lock(&dev->enumerate_lock);
+	PCIE_DBG(dev, "Enable RC%d\n", rc_idx);
+
+	ret = msm_pcie_enable(dev);
+	if (ret)
+		PCIE_ERR(dev, "PCIe: RC%d: failed to enable\n", dev->rc_idx);
+
+	mutex_unlock(&dev->enumerate_lock);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(msm_pcie_enable_rc);
 
 int msm_pcie_debug_info(struct pci_dev *dev, u32 option, u32 base,
 			u32 offset, u32 mask, u32 value)
@@ -9663,6 +9712,19 @@ out:
 
 	return ret;
 }
+
+int ispv4_disable_wakeup(void)
+{
+	struct msm_pcie_dev_t *dev = msm_pcie_dev[1];
+
+	if (!dev)
+		return -ENODEV;
+
+	msm_pcie_irq_deinit(dev);
+	pr_info("disable ispv4 wakeup irq.");
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ispv4_disable_wakeup);
 
 static int msm_pcie_remove(struct platform_device *pdev)
 {
