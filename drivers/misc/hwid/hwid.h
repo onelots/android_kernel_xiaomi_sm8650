@@ -11,11 +11,18 @@
 #include <linux/types.h>
 
 #define HARDWARE_PROJECT_UNKNOWN    0
-#define HARDWARE_PROJECT_N3         2 // houji
-#define HARDWARE_PROJECT_N11U       3 // manet
-#define HARDWARE_PROJECT_N18        7 // goku
-#define HARDWARE_PROJECT_O81       10 // muyu
-#define HARDWARE_PROJECT_O82       11 // uke
+#define HARDWARE_PROJECT_N1    		1 // aurora
+#define HARDWARE_PROJECT_N2    		2 // shennong
+#define HARDWARE_PROJECT_N3    		3 // houji
+#define HARDWARE_PROJECT_N8    		4 // ruyi
+#define HARDWARE_PROJECT_N11U       5 // manet
+#define HARDWARE_PROJECT_N18    	6 // goku
+#define HARDWARE_PROJECT_O11    	7 // zorn
+// SM8635
+#define HARDWARE_PROJECT_N16T    	8  // peridot
+#define HARDWARE_PROJECT_N9       	9  // chenfeng
+#define HARDWARE_PROJECT_O81    	10 // muyu
+#define HARDWARE_PROJECT_O82    	11 // uke
 
 typedef enum {
 	CountryCN = 0x00,
