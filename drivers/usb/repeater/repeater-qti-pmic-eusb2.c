@@ -607,7 +607,7 @@ static int eusb2_repeater_probe(struct platform_device *pdev)
 {
 	struct eusb2_repeater *er;
 	struct device *dev = &pdev->dev;
-
+	uint32_t platform_id, build_major, build_minor,hwid_major;
 	int ret = 0, base, parse_ret = 0;
 
 	er = devm_kzalloc(dev, sizeof(*er), GFP_KERNEL);
@@ -644,22 +644,61 @@ static int eusb2_repeater_probe(struct platform_device *pdev)
 		goto err_probe;
 	}
 	/*This is the device parameters.*/
-	ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq",
-                    &er->param_override_seq, &er->param_override_seq_cnt);
+	platform_id = get_hw_version_platform();
+	build_major = get_hw_version_build();
+	build_minor = get_hw_version_minor();
+	hwid_major = get_hw_version_major();
+	dev_err(dev, "platform_id is %d, build_major is %d, build_minor is %d hwid_major: %d \n", platform_id, build_major, build_minor,hwid_major);
+	er->en_ms_flag = 0;
+	dev_err(dev, "platform_id is %d, build_major is %d, build_minor is %d\n", platform_id, build_major, build_minor);
+	if((platform_id == HARDWARE_PROJECT_N2) && (build_major == 1) && (build_minor == 1)){
+		ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-p11",
+			&er->param_override_seq, &er->param_override_seq_cnt);
+	}
+	else if ((platform_id == HARDWARE_PROJECT_N2) && build_major == 9) {
+		ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-mp",
+			&er->param_override_seq, &er->param_override_seq_cnt);
+	}
+	else if ((platform_id == HARDWARE_PROJECT_N1) && ((hwid_major == 0x22) || (hwid_major == 0x29))) {
+		ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-india",
+			&er->param_override_seq, &er->param_override_seq_cnt);
+	}
+#if IS_ENABLED(CONFIG_FACTORY_BUILD)
+	else if( (platform_id == HARDWARE_PROJECT_N3) || (platform_id == HARDWARE_PROJECT_N1)
+					|| (platform_id == HARDWARE_PROJECT_N16T) || (platform_id == HARDWARE_PROJECT_N18)
+					|| (platform_id == HARDWARE_PROJECT_O81) || (platform_id == HARDWARE_PROJECT_O82) ){
+		ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-factory",
+			&er->param_override_seq, &er->param_override_seq_cnt);
+	}
+#endif
+	else{
+		ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq",
+                       &er->param_override_seq, &er->param_override_seq_cnt);
+	}
+
 	if (ret < 0)
 		goto err_probe;
 	
-	ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-host",
-		&er->host_param_override_seq, &er->host_param_override_seq_cnt);
+
+	if ((platform_id == HARDWARE_PROJECT_N2) && build_major == 9) {
+		ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-mp-host",
+			&er->host_param_override_seq, &er->host_param_override_seq_cnt);
+	} else{
+			ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-host",
+			&er->host_param_override_seq, &er->host_param_override_seq_cnt);
+	}
 	if (ret < 0)
 		goto err_probe;
 
-	parse_ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-host-ms",
-		&er->param_override_seq_host_ms,
-		&er->param_override_seq_cnt_host_ms);
-	er->en_ms_flag = 1;
-	if (parse_ret < 0)
-		goto err_probe;
+	if ( platform_id== HARDWARE_PROJECT_N8) {
+		 parse_ret = eusb2_repeater_read_overrides(dev, "qcom,param-override-seq-host-ms",
+			&er->param_override_seq_host_ms,
+			&er->param_override_seq_cnt_host_ms);
+		er->en_ms_flag = 1;
+		pr_info("miusb enable ms scheme\n");
+		if (parse_ret < 0)
+		 	goto err_probe;
+		}
 
 	er->ur.dev = dev;
 	er->ms_flag = 0;
